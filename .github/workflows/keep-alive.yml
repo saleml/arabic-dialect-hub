@@ -10,6 +10,9 @@ jobs:
   keep-alive:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
       - name: Keep-alive INSERT (touch)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -37,3 +40,12 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_KEY" >/dev/null
 
           echo "Supabase pinged successfully at $(date -u)"
+
+      - name: Update keep-alive timestamp to prevent workflow disabling
+        run: |
+          date -u > .last-keep-alive
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .last-keep-alive
+          git diff --cached --quiet || git commit -m "chore: keep-alive ping $(date -u +%Y-%m-%d)"
+          git push
